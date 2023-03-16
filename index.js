@@ -28,7 +28,7 @@ app.whenReady().then(() =>
   win.show();
   win.maximize();
 
-  //win.webContents.openDevTools()
+  win.webContents.openDevTools()
 
 
 })
