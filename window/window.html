@@ -2,14 +2,112 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';">
     <link rel="stylesheet" type="text/css" href="window.css">
     <title>DiGram</title>
-    <div id="test">
-      Hehe
-    </div>
   </head>
   <body>
+    <div class="top-menu">
+      <div class="left-edge"></div>
+      <div class="square-btn">
+        <a href="#"><img src="../icons/undo.png"></a>
+      </div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/redo.png"></a>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/cut.png"></a>
+      </div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/copy.png"></a>
+      </div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/paste.png"></a>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="square-btn" id="btn-remove">
+        <a href="#"><img src="../icons/delete.png"></a>
+      </div>
+
+      <div class="spacer"></div>
+
+      <select id="fontPickerFamily">
+      </select>
+
+      <select id="fontPickerSize">
+      </select>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/bold.png"></a>
+      </div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/italic.png"></a>
+      </div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/underline.png"></a>
+      </div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/color.png"></a>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="square-btn" id="btn-wider">
+        <a href="#"><img src="../icons/wider.png"></a>
+      </div>
+
+      <div class="square-btn" id="btn-shorter">
+        <a href="#"><img src="../icons/shorter.png"></a>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="square-btn">
+        <a href="#"><img src="../icons/conn.png"></a>
+      </div>
+
+      <div class="lengther"></div>
+
+      <div class="square-btn" id="btn-grid">
+        <a href="#"><img src="../icons/grid.png"></a>
+      </div>
+
+      <div class="left-edge"></div>
+    </div>
+    <div class="wrapper">
+      <div class="toolbox">
+        <div class="search-bar">
+          <div class="title">
+            <div class="caption">Elementy</div>
+            <div class="button">
+              <a href="#">&lt;</a>
+            </div>
+          </div>
+          <div class="search-area">
+            <input type="text" id="search-box">
+            <div class="icon">
+              <img src="../icons/lupa.png">
+            </div>
+          </div>
+        </div>
+        <div class="toolset" id="toolbox">
+        </div>
+      </div>
+      <div class="viewport" id="viewport">
+
+      </div>
+    </div>
     <script src="window.js" defer></script>
   </body>
 </html>

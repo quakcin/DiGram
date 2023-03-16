@@ -1,10 +1,311 @@
 
-html, body {
-  background-color: #FF00FF;
+@font-face 
+{
+  font-family: 'Segoe';
+  src: URL('../fonts/Segoe\ UI.ttf') format('truetype');
 }
 
-#test 
+@font-face 
 {
-  padding: 100px;
-  background-color: #2137FF;
+  font-family: 'Calibri';
+  src: URL('../fonts/Calibri.ttf') format('truetype');
+}
+
+@font-face 
+{
+  font-family: 'Monaco';
+  src: URL('../fonts/Monaco.ttf') format('truetype');
+}
+
+@font-face 
+{
+  font-family: 'Cascadia';
+  src: URL('../fonts/Cascadia.ttf') format('truetype');
+}
+
+@font-face 
+{
+  font-family: 'Lora';
+  src: URL('../fonts/Lora.ttf') format('truetype');
+}
+
+@font-face 
+{
+  font-family: 'SourceCode';
+  src: URL('../fonts/SourceCode.ttf') format('truetype');
+}
+
+html, body 
+{
+  border: 0px;
+  margin: 0px;
+  padding: 0px;
+  overflow: hidden;
+}
+
+.top-menu 
+{
+  width: 100%;
+  background-color: #F9F9F9; 
+  height: 45px;
+  border-bottom: 2px solid #f2f2f2;
+  display: flex;
+  position: relative;
+  z-index: 99999999;
+}
+
+.wrapper 
+{
+  width: 100;
+  display: flex;
+  height: calc(100vh - 45px);
+}
+
+.toolbox 
+{
+  z-index: 99999999;
+  width: 200px;
+  background-color: #F9F9F9;
+  border-right: 3px solid #f2f2f2;
+}
+
+.viewport
+{
+  width: calc(100vw - 200px);
+  overflow: show;
+  background-color: white;
+}
+
+/**
+ *  Menu Bar
+ */
+
+.top-menu > .square-btn
+{
+  cursor: pointer;
+  width: 40px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.top-menu > .square-btn img
+{
+  width: 20px;
+  height: 20px;
+  border: 0px;
+}
+
+.top-menu > .spacer
+{
+  width: 3px;
+  height: 35px;
+  margin-top: 5px;
+  background-color: #f2f2f2;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.top-menu > .left-edge
+{
+  margin-left: 10px;
+}
+
+.search-bar
+{
+  border-bottom: 2px solid #f2f2f2;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.search-bar > .title
+{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-bar > .title > .button a
+{
+  display: none; /* WARN: Possible feature */
+  text-decoration: none;
+  color: #2a579a;
+  font-family: Segoe;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.search-bar > .title > .caption
+{
+  font-family: Segoe;
+  color: #2a579a;
+  font-size: 18px;
+}
+
+.search-bar > .search-area
+{
+  display: flex;
+  margin-top: 15px;
+}
+
+
+.search-bar > .search-area > input
+{
+  outline: none;
+  font-family: Segoe;
+  border: 2px solid #f2f2f2;
+  padding: 5px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.search-bar > .search-area > .icon 
+{
+  width: 40px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #f2f2f2;
+  border-left: none;
+  background-color: white;
+}
+
+.search-bar > .search-area > .icon > img
+{
+  width: 20px;
+  height: 20px;
+}
+
+#fontPickerFamily
+{
+  outline: none;
+  background-color: transparent;
+  border: 1px solid black;
+  height: 35px;
+  margin-top: 5px;
+  width: 130px;
+  font-size: 18px;
+  color: black;
+}
+
+#fontPickerSize
+{
+  outline: none;
+  background-color: transparent;
+  border: 1px solid black;
+  height: 35px;
+  margin-top: 5px;
+  width: 50px;
+  border-left: none;
+  margin-right: 10px;
+  font-size: 18px;
+  color: black;
+}
+
+
+
+/**
+ *  Toolbar
+ */
+
+.tool
+{
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  margin-top: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tool > .icon
+{
+  width: 100%;
+  text-align: center;
+}
+
+.tool > .icon > img
+{
+  width: 70%;
+}
+
+.tool > .name 
+{
+  width: 100%;
+  text-align: center;
+  font-family: 'Segoe';
+  color: #C1C1C1;
+  user-select: none;
+}
+
+
+/**
+ *  Diagram Elements
+ */
+
+.PoczątekElement
+{
+  background-color: #74ae43;
+  border-radius: 25px;
+  padding: 10px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.PoczątekElement > div
+{
+  color: white;
+  text-align: center;
+  outline: none;
+}
+
+.PrzetwarzanieElement 
+{
+  background-color: #3E70C5;
+  padding: 10px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.PrzetwarzanieElement > div
+{
+  color: white;
+  text-align: left;
+  outline: none;
+}
+
+.WarunekElement
+{
+  background-color: transparent;
+  background-image: url('../icons/rhm.png');
+  background-size:100% 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.WarunekElement > div
+{
+  color: white;
+  text-align: center;
+  outline: none;
+}
+
+.KoniecElement
+{
+  background-color: #C90005;
+  border-radius: 25px;
+  padding: 10px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.KoniecElement > div
+{
+  color: white;
+  text-align: center;
+  outline: none;
 }
