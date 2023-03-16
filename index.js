@@ -26,8 +26,9 @@ app.whenReady().then(() =>
 
   win.loadFile('./window/window.html');
   win.show();
+  win.maximize();
 
-  win.webContents.openDevTools()
+  //win.webContents.openDevTools()
 
 
 })

@@ -23,7 +23,7 @@ const initToolSet = function ()
   toolSet.push
   ({
     name: "Warunek",
-    icon: "../icons/ifs.png"
+    icon: "../icons/rhm.png"
   });
   toolSet.push
   ({
@@ -43,7 +43,7 @@ const searchTool = function (name)
       <div class="tool" title="Blok ${tool.name}" onmousedown="pickAnItem('${tool.name}')">
         <div class="icon">
           <!-- img src="${tool.icon}" -->
-          <div style="width: 180px; height: 60px; background-image: url('${tool.icon}')"></div>
+          <div style="width: 180px; height: 70px; background-image: url('${tool.icon}'); background-size: 100%; background-repeat: no-repeat;"></div>
         </div>
         <div class="name">
           ${tool.name}
@@ -185,7 +185,7 @@ const initFonts = function ()
 
   for (let i = 8; i < 72; i += 4)
     fontPickerSize.innerHTML += `
-      <option value="${i}">${i}</option>
+      <option value="${i}" ${i == 12 ? 'selected' : ''}>${i}</option>
     `;
 }
 
@@ -242,7 +242,7 @@ document.getElementById('btn-wider').onmousedown = function (e)
   const box = document.getElementById(editor.selected);
   const tag = JSON.parse(box.dataset['tag']);
 
-  if (tag.width > 300)
+  if (tag.width > 800)
     return;
 
   tag.width += 10;
