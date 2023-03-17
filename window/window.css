@@ -263,6 +263,7 @@ html, body
   color: white;
   text-align: center;
   outline: none;
+  user-select: none;
 }
 
 .PrzetwarzanieElement 
@@ -278,6 +279,7 @@ html, body
   color: white;
   text-align: left;
   outline: none;
+  user-select: none;
 }
 
 .WarunekElement
@@ -295,11 +297,12 @@ html, body
   color: white;
   text-align: center;
   outline: none;
+  user-select: none;
 }
 
 .KoniecElement
 {
-  background-color: #C90005;
+  background-color: #f09609;
   border-radius: 25px;
   padding: 10px;
   box-sizing: border-box;
@@ -311,4 +314,78 @@ html, body
   color: white;
   text-align: center;
   outline: none;
+  user-select: none;
+}
+
+.FunkcjaElement
+{
+  background-color: transparent;
+  background-image: url('../icons/funct.png');
+  background-size:100% 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.FunkcjaElement > div
+{
+  color: white;
+  text-align: center;
+  outline: none;
+  user-select: none;
+}
+
+.IOElement
+{
+  background-color: transparent;
+  background-image: url('../icons/ioctl.png');
+  background-size:100% 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.ArrowElement
+{
+  background-color: black;
+  /* background-image: url('../icons/arrow-top.png'); */
+  background-size:100% 100%;
+  padding: 1px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.IOElement > div
+{
+  color: white;
+  text-align: center;
+  outline: none;
+  user-select: none;
+}
+
+.TekstElement
+{
+  background-color: transparent;
+  padding: 20px;
+  box-sizing: border-box;
+  position: fixed;
+}
+
+.TekstElement > div
+{
+  color: black;
+  text-align: center;
+  outline: none;
+  user-select: none;
+}
+
+#select-area
+{
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  z-index: 999999;
+  background-color: #207cf5;
+  border: 2px solid #0752b5;
+  opacity: 0.5;
 }

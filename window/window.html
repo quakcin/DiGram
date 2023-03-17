@@ -40,20 +40,22 @@
       <div class="spacer"></div>
 
       <select id="fontPickerFamily">
+        <option value="None" hidden disabled></option>
       </select>
 
       <select id="fontPickerSize">
+        <option value="None" hidden disabled></option>
       </select>
 
-      <div class="square-btn">
+      <div class="square-btn" id="btn-bold">
         <a href="#"><img src="../icons/bold.png"></a>
       </div>
 
-      <div class="square-btn">
+      <div class="square-btn" id="btn-italic">
         <a href="#"><img src="../icons/italic.png"></a>
       </div>
 
-      <div class="square-btn">
+      <div class="square-btn" id="btn-underline">
         <a href="#"><img src="../icons/underline.png"></a>
       </div>
 
@@ -73,7 +75,7 @@
 
       <div class="spacer"></div>
 
-      <div class="square-btn">
+      <div class="square-btn" id="btn-path" style="opacity: 0.2">
         <a href="#"><img src="../icons/conn.png"></a>
       </div>
 
@@ -105,8 +107,8 @@
         </div>
       </div>
       <div class="viewport" id="viewport">
-
       </div>
+      <div id="select-area"></div>
     </div>
     <script src="window.js" defer></script>
   </body>
