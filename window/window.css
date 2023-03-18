@@ -52,6 +52,7 @@ html, body
   display: flex;
   position: relative;
   z-index: 99999999;
+  user-select: none;
 }
 
 .wrapper 
