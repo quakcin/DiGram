@@ -93,9 +93,15 @@ html, body
 
 .top-menu > .square-btn img
 {
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
+  padding: 3px;
   border: 0px;
+}
+
+.top-menu > .active img
+{
+  background-color: #C6C6C6;
 }
 
 .top-menu > .spacer
@@ -290,6 +296,9 @@ html, body
   padding: 20px;
   box-sizing: border-box;
   position: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center; 
 }
 
 .WarunekElement > div
@@ -343,6 +352,9 @@ html, body
   padding: 20px;
   box-sizing: border-box;
   position: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center; 
 }
 
 .ArrowElement

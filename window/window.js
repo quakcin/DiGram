@@ -230,8 +230,10 @@ const updateElement = function (id)
     const isSelected = editor.selected.includes(id);
 
     const border = isSelected
-      ? '4px solid #C59624'
-      : '4px solid white';
+      ? tag.type == 'Arrow' ? '1px solid #C59624' : '4px solid #C59624'
+      : tag.type == 'Arrow' ? '1px solid transparent' : '4px solid transparent';
+
+    //if arrows 1px, don't have to '1px solid #C59624' 
 
     const weight = tag.isBold ? 'bold' : 'normal';
     const italic = tag.isItalic ? 'italic' : 'normal';
@@ -266,7 +268,7 @@ const editor =
   dragBox: null,
   zindexing: 0,
   selected: [], /*all selected items*/
-  gridEnabled: true,
+  gridEnabled: false,
   groupselect: false,
   areaselect:
   {
@@ -699,9 +701,9 @@ document.getElementById('btn-grid').onclick = function (e)
   editor.gridEnabled = !editor.gridEnabled;
 
   if (editor.gridEnabled)
-    document.getElementById('btn-grid').style = 'opacity: 1.0';
+    document.getElementById('btn-grid').classList.add('active');
   else
-    document.getElementById('btn-grid').style = 'opacity: 0.2';
+    document.getElementById('btn-grid').classList.remove('active');
 }
 
 document.getElementById('fontPickerFamily').onchange = function (e)
@@ -742,9 +744,9 @@ document.getElementById('btn-path').onclick = function (e)
   editor.pathing = !editor.pathing;
 
   if (editor.pathing)
-    document.getElementById('btn-path').style = 'opacity: 1.0';
+    document.getElementById('btn-path').classList.add('active');
   else
-    document.getElementById('btn-path').style = 'opacity: 0.2';
+    document.getElementById('btn-path').classList.remove('active');
 
   if (editor.pathing)
     editor.areaselect.enabled = false;
@@ -752,7 +754,7 @@ document.getElementById('btn-path').onclick = function (e)
 
 
 document.getElementById('btn-bold').onclick = function (e)
-{
+{  
   eachSelected((id, box, tag) => 
   {
     tag.isBold = !tag.isBold;
