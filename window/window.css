@@ -292,7 +292,7 @@ html, body
 {
   background-color: transparent;
   background-image: url('../icons/rhm.png');
-  padding: 10px;
+  padding: 20px;
   box-sizing: border-box;
   position: fixed;
   background-size: contain;
@@ -347,7 +347,7 @@ html, body
 {
   background-color: transparent;
   background-image: url('../icons/ioctl.png');
-  padding: 10px;
+  padding: 20px;
   box-sizing: border-box;
   position: fixed;
   background-size: contain;
