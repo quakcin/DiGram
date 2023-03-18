@@ -66,7 +66,6 @@ const searchTool = function (name)
         </div>
       </div>
     `;
-  console.log('setting', ht);
 
   document.getElementById('toolbox').innerHTML = ht;
 }
@@ -119,7 +118,7 @@ const spawnAnItem = function (itemName)
       onmousedown="moveObject('${itemId}', event)" 
       onclick="selectItem('${itemId}');"
     > 
-      <div ondblclick="this.contentEditable = true;">
+      <div ondblclick="this.contentEditable = true; this.focus(); selectTextElement(this)">
         ${itemName}
       </div>  
     </div>
@@ -189,7 +188,6 @@ const spawnAnArrow = function (x, y, w, h, dir)
       "></div>
   `;
 
-
   const itemId = crypto.randomUUID();
   const itemTag =
   {
@@ -199,13 +197,17 @@ const spawnAnArrow = function (x, y, w, h, dir)
     height: h,
     x: x, 
     y: y,
-    z: 0,
+    z: editor.zindexing,
     face: 'None',
     size: 'None',
     dir: dir,
     isBold: false,
     isItalic: false,
-    isUnderlined: false
+    isUnderlined: false,
+    arrow: 
+    {
+      head: editor.usePeak
+    }
   }
 
   const ht = `
@@ -216,7 +218,7 @@ const spawnAnArrow = function (x, y, w, h, dir)
       onmousedown="moveObject('${itemId}', event)" 
       onclick="selectItem('${itemId}');"
     >
-      ${dirs[dir]}
+      <div>${dirs[dir]}</div>
     </div>
   `;
   document.getElementById('viewport').innerHTML += ht;
@@ -229,12 +231,8 @@ const updateElement = function (id)
     const tag = JSON.parse(box.dataset['tag']);
     const isSelected = editor.selected.includes(id);
 
-    const border = isSelected
-      ? tag.type == 'Arrow' ? '1px solid #C59624' : '4px solid #C59624'
-      : tag.type == 'Arrow' ? '1px solid transparent' : '4px solid transparent';
-
-    //if arrows 1px, don't have to '1px solid #C59624' 
-
+    const borderColor = isSelected ? '#C59624' : 'transparent';
+    const borderSize = tag.type == 'Arrow' ? '1px' : '4px';
     const weight = tag.isBold ? 'bold' : 'normal';
     const italic = tag.isItalic ? 'italic' : 'normal';
     const underline = tag.isUnderlined ? 'underline' : 'none';
@@ -243,7 +241,7 @@ const updateElement = function (id)
                  top: ${tag.y}px; 
                  width: ${tag.width}px;
                  z-index: ${tag.z};
-                 border: ${border};
+                 border: ${borderSize} solid ${borderColor};
                  font-family: ${tag.face};
                  font-size: ${tag.size}px;
                  height: ${tag.type == 'Arrow' ? tag.height + 'px' : 'auto'};
@@ -252,9 +250,10 @@ const updateElement = function (id)
                  text-decoration: ${underline};
                  `;
 
-    // console.log('updated ', id, tag);
-}
+    if (tag.type == 'Arrow')
+      box.children[0].style = `display: ${tag.arrow.head ? 'block' : 'none'}`;
 
+}
 
 /**
  * Active Editor
@@ -263,6 +262,7 @@ const updateElement = function (id)
 const editor = 
 {
   pathing: false,
+  usePeak: true,
   selectedTool: null,
   dragging: false,
   dragBox: null,
@@ -316,7 +316,13 @@ const moveSelectedObjects = function (vx, vy)
 
 const pickAnItem = function (itemName)
 {
+  /**
+   * WARN: TODO: Move this to a separate function
+   *             perhaps built controller or sth
+   */
   editor.pathing = false;
+  document.getElementById('btn-path').classList.remove('active');
+
   const id = spawnAnItem(itemName);
   moveObject(id);
 }
@@ -344,7 +350,6 @@ const eachSelected = function (fn, update = true)
   for (let s of editor.selected)
   {
     const box = document.getElementById(s);
-    console.log(s, box, box.dataset['tag']);
     const tag = JSON.parse(box.dataset['tag']);
     const newTag = fn(s, box, tag);
     box.dataset['tag'] = JSON.stringify(newTag);
@@ -392,17 +397,36 @@ const initFonts = function ()
  * Events
  */
 
+const selectTextElement = function (element)
+{
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(range);
+}
+
+const isFarViewport = function (node)
+{
+  for (let i = 0; i < 4; i++)
+  {
+    if (node.id == 'viewport')
+      return true;
+    node = node.parentNode;
+  }
+  return false;
+}
+
 document.body.onload = function ()
 {
   initToolSet();
   initFonts();
+  initEvents();
   searchTool('');
 }
 
 document.body.onmousedown = function (e)
 {
-
-  if (editor.pathing)
+  if (editor.pathing && isFarViewport(e.target))
   {
     if (editor.areaselect.enabled == false)
     { /* 1st anchor */
@@ -426,7 +450,6 @@ document.body.onmousedown = function (e)
       ele.children[0].contentEditable = false;
 
   /* area selection tool */
-  console.log(e);
   editor.areaselect.enabled = true;
   editor.areaselect.x = e.clientX;
   editor.areaselect.y = e.clientY;
@@ -522,18 +545,37 @@ document.body.onmouseup = function (e)
       }
     }
 
+    /**
+     * Update active controlls in top-nav-menu-bar thing
+     * also, handle arrows
+     */
     if (inRange.length > 0)
     {
       let sameFace = true;
       let sameSize = true;
+      let allPeaksDisabled = true;
+      let allPeaksEnabled = true;
+      let hasArrow = false;
 
       for (let t of inRange)
       {
-        if (t.face != inRange[0].face)
-          sameFace = false;
+        if (t.type != 'Arrow')
+        {
+          if (t.face != inRange[0].face)
+            sameFace = false;
 
-        if (t.size != inRange[0].size)
-          sameSize = false;
+          if (t.size != inRange[0].size)
+            sameSize = false;
+        }
+        else
+        {
+          hasArrow = true;
+
+          if (t.arrow.head)
+            allPeaksDisabled = false;
+          if (t.arrow.head == false)
+            allPeaksEnabled = false;
+        }
       }
 
       if (sameFace)
@@ -545,6 +587,15 @@ document.body.onmouseup = function (e)
         fontPickerSize.value = inRange[0].size;
       else
         fontPickerSize.value = 'None';
+
+      if (hasArrow)
+      {
+        if (allPeaksDisabled)
+          document.getElementById('btn-peak').classList.add('active'); 
+
+        if (allPeaksEnabled)
+          document.getElementById('btn-peak').classList.remove('active'); 
+      }
     }
   }
   else if (editor.dragging)
@@ -556,6 +607,17 @@ document.body.onmouseup = function (e)
     const tag = JSON.parse(box.dataset['tag']);
     fontPickerFamily.value = tag.face;
     fontPickerSize.value = tag.size;
+
+    if (tag.type == 'Arrow' && tag.arrow.head)
+    {
+      editor.usePeak = true;
+      document.getElementById('btn-peak').classList.remove('active');
+    }
+    else if (tag.type == 'Arrow')
+    {
+      editor.usePeak = false;
+      document.getElementById('btn-peak').classList.add('active');
+    }
   }
 
   editor.dragging = false;
@@ -565,9 +627,6 @@ document.body.onmousemove = function (e)
 {
   if (editor.pathing)
   { /* god prop */
-    // console.log(e);
-
-
   }
   else if (editor.areaselect.enabled)
   {
@@ -635,6 +694,18 @@ document.body.onmousemove = function (e)
 
 document.body.onkeydown = function (e)
 {
+  /**
+   * Handle keyboardEventTable
+   */
+
+  console.log(e);
+  const keyCode = `${e.ctrlKey ? 'CT' : ''}_${e.key}`;
+  if (Object.keys(keyboardEventTable).includes(keyCode))
+    keyboardEventTable[keyCode](e);
+
+  /**
+   * Handle rest
+   */
   if (e.key == 'Shift')
   {
     editor.groupselect = true;
@@ -661,51 +732,6 @@ document.body.onkeyup = function (e)
   }
 }
 
-document.getElementById('btn-wider').onmousedown = function (e)
-{
-  eachSelected((id, box, tag) => 
-  {
-    if (tag.type == 'Arrow')
-      return tag;
-
-    if (tag.width < 580)
-    {
-      tag.width += 10;
-      tag.x -= 5;
-    }
-    return tag;
-  });
-}
-
-document.getElementById('btn-shorter').onmousedown = function (e)
-{
-  eachSelected((id, box, tag) => 
-  {
-    if (tag.type == 'Arrow')
-      return tag;
-
-    console.log('b', id, tag);
-    if (tag.width > 80)
-    {
-      console.log('shrunker');
-      tag.width -= 10;
-      tag.x += 5;
-    }
-    console.log('a', id, tag);
-    return tag;
-  });
-}
-
-document.getElementById('btn-grid').onclick = function (e)
-{
-  editor.gridEnabled = !editor.gridEnabled;
-
-  if (editor.gridEnabled)
-    document.getElementById('btn-grid').classList.add('active');
-  else
-    document.getElementById('btn-grid').classList.remove('active');
-}
-
 document.getElementById('fontPickerFamily').onchange = function (e)
 {
   eachSelected((id, box, tag) => 
@@ -724,11 +750,6 @@ document.getElementById('fontPickerSize').onchange = function (e)
   });
 }
 
-document.getElementById('btn-remove').onclick = function (e)
-{
-  for (let id of editor.selected)
-    document.getElementById(id).remove();
-}
 
 document.getElementById('viewport').onclick = function (e)
 {
@@ -739,21 +760,30 @@ document.getElementById('viewport').onclick = function (e)
   updateAllElements();
 }
 
-document.getElementById('btn-path').onclick = function (e)
+
+/**
+ * Big Refactor Upcomming
+ */
+
+const evtTogglePathing = function (e)
 {
   editor.pathing = !editor.pathing;
+  const pathBtn = document.getElementById('btn-path');
+  const peakBtn = document.getElementById('btn-peak');
 
   if (editor.pathing)
-    document.getElementById('btn-path').classList.add('active');
-  else
-    document.getElementById('btn-path').classList.remove('active');
-
-  if (editor.pathing)
+  {
+    pathBtn.classList.add('active');
     editor.areaselect.enabled = false;
+  }
+  else
+  {
+    pathBtn.classList.remove('active');
+  }
 }
 
 
-document.getElementById('btn-bold').onclick = function (e)
+const evtToggleBold = function (e)
 {  
   eachSelected((id, box, tag) => 
   {
@@ -762,7 +792,7 @@ document.getElementById('btn-bold').onclick = function (e)
   })
 }
 
-document.getElementById('btn-italic').onclick = function (e)
+const evtToggleItalic = function (e)
 {
   eachSelected((id, box, tag) => 
   {
@@ -771,11 +801,111 @@ document.getElementById('btn-italic').onclick = function (e)
   })
 }
 
-document.getElementById('btn-underline').onclick = function (e)
+const evtToggleUnderline = function (e)
 {
   eachSelected((id, box, tag) => 
   {
     tag.isUnderlined = !tag.isUnderlined;
     return tag;
   })
+}
+
+const evtRemove = function (e)
+{
+  for (let id of editor.selected)
+    document.getElementById(id).remove();
+}
+
+const evtTogglePeaks = function (e)
+{
+  const peakBtn = document.getElementById('btn-peak');
+  editor.usePeak = !editor.usePeak;
+
+  if (editor.usePeak == false)
+    peakBtn.classList.add('active');
+  else
+    peakBtn.classList.remove('active');
+    
+  eachSelected((id, box, tag) => 
+  {
+    if (tag.type != 'Arrow')
+      return tag;
+
+    tag.arrow.head = editor.usePeak;
+    return tag;
+  })
+}
+
+const evtWidener = function (e)
+{
+  eachSelected((id, box, tag) => 
+  {
+    if (tag.type == 'Arrow')
+      return tag;
+
+    if (tag.width < 580)
+    {
+      tag.width += 10;
+      tag.x -= 5;
+    }
+    return tag;
+  });
+}
+
+const evtShortener = function (e)
+{
+  eachSelected((id, box, tag) => 
+  {
+    if (tag.type == 'Arrow')
+      return tag;
+
+    if (tag.width > 80)
+    {
+      tag.width -= 10;
+      tag.x += 5;
+    }
+    return tag;
+  });
+}
+
+const evtToggleGrid = function (e)
+{
+  editor.gridEnabled = !editor.gridEnabled;
+
+  if (editor.gridEnabled)
+    document.getElementById('btn-grid').classList.add('active');
+  else
+    document.getElementById('btn-grid').classList.remove('active');
+}
+
+/**
+ * Simple eventManager
+ */
+
+const keyboardEventTable = [];
+
+const eventHookUp = function (funct, id, key = null, ctrl = false)
+{
+  document.getElementById(id).onclick = funct;
+  if (key != null)
+    keyboardEventTable[`${ctrl ? 'CT' : ''}_${key}`] = funct;
+}
+
+const initEvents = function ()
+{
+  eventHookUp(evtRemove, 'btn-remove', 'Delete');
+  eventHookUp(evtTogglePeaks, 'btn-peak', 'Enter');
+  eventHookUp(evtTogglePathing, 'btn-path', ' ');
+  eventHookUp(evtToggleGrid, 'btn-grid', 'g', true);
+
+  eventHookUp(evtToggleBold, 'btn-bold', 'b', true);
+  eventHookUp(evtToggleItalic, 'btn-italic', 'i', true);
+  eventHookUp(evtToggleUnderline, 'btn-underline', 'u', true);
+
+
+  eventHookUp(evtShortener, 'btn-shorter', '-', true);
+  eventHookUp(evtWidener, 'btn-wider', '=', true);
+
+
+
 }

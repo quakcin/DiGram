@@ -89,6 +89,7 @@ html, body
   justify-content: center;
   align-items: center;
   margin-top: 2px;
+  user-select: none;
 }
 
 .top-menu > .square-btn img
@@ -148,6 +149,7 @@ html, body
   font-family: Segoe;
   color: #2a579a;
   font-size: 18px;
+  user-select: none;
 }
 
 .search-bar > .search-area
@@ -165,6 +167,7 @@ html, body
   padding: 5px;
   box-sizing: border-box;
   width: 100%;
+  user-select: none;
 }
 
 .search-bar > .search-area > .icon 
@@ -177,12 +180,19 @@ html, body
   border: 2px solid #f2f2f2;
   border-left: none;
   background-color: white;
+  user-select: none;
 }
 
 .search-bar > .search-area > .icon > img
 {
   width: 20px;
   height: 20px;
+}
+
+.toolset 
+{
+  height: calc(100vh - 150px);
+  overflow-y: scroll;
 }
 
 #fontPickerFamily
