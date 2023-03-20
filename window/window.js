@@ -105,9 +105,9 @@ const spawnAnItem = function (itemName)
     z: editor.zindexing,
     face: document.getElementById('fontPickerFamily').value,
     size: document.getElementById('fontPickerSize').value,
-    isBold: false,
-    isItalic: false,
-    isUnderlined: false
+    isBold: editor.utils.bold,
+    isItalic: editor.utils.italic,
+    isUnderlined: editor.utils.underline
   }
 
   const ht = `
@@ -124,6 +124,7 @@ const spawnAnItem = function (itemName)
     </div>
   `;
   document.getElementById('viewport').innerHTML += ht;
+  // historyRecord();
   return itemId;
 }
 
@@ -222,6 +223,7 @@ const spawnAnArrow = function (x, y, w, h, dir)
     </div>
   `;
   document.getElementById('viewport').innerHTML += ht;
+
   return itemId;
 }
 
@@ -280,6 +282,12 @@ const editor =
     x: 0, y: 0,
     tmp: []
   },
+  utils:
+  {
+    bold: false,
+    italic: false,
+    underline: false
+  }
 };
 
 const moveObject = function (id, e = null)
@@ -332,6 +340,8 @@ const updateAllElements = function ()
   const elements = document.getElementsByClassName('DiagramElement');
   for (let ele of elements)
     updateElement(ele.id);
+
+  historyRecord(); /* WARN: Might explode */
 }
 
 const selectItem = function (id)
@@ -421,7 +431,9 @@ document.body.onload = function ()
   initToolSet();
   initFonts();
   initEvents();
+  initHistory();
   searchTool('');
+  historyRecord(); /* first possible state */
 }
 
 document.body.onmousedown = function (e)
@@ -459,6 +471,10 @@ document.body.onmouseup = function (e)
 {
   if (editor.pathing)
   {
+    // editor.utils.bold = !tag.bold;
+    // editor.utils.italic = !tag.italic;
+    
+    
     if (editor.areaselect.enabled)
     { /* 2nd anchor */
 
@@ -516,6 +532,10 @@ document.body.onmouseup = function (e)
   }
   else if (editor.areaselect.enabled)
   {
+    /**
+     * WARN: e.button := 0 (LEFT  MOUSE)
+     *                := 2 (RIGHT MOUSE)
+     */
     /* disable and hide area */
     editor.areaselect.enabled = false;
     document.getElementById('select-area').style = 'top: -1000px; left: -1000px';
@@ -523,12 +543,32 @@ document.body.onmouseup = function (e)
     /* then, select items */
     let bounds = [editor.areaselect.x, editor.areaselect.y, e.clientX, e.clientY];
 
+    if (e.button == 2)
+    { /* RIGHT_MOUSE_BUTTON */
+      /* move all objects by this vector, then update */
+      const vx = bounds[2] - bounds[0];
+      const vy = bounds[3] - bounds[1];
+
+      const allElements = document.getElementsByClassName('DiagramElement');
+      for (let ele of allElements)
+      {
+        const tag = JSON.parse(ele.dataset['tag']);
+        tag.x += vx;
+        tag.y += vy;
+        ele.dataset['tag'] = JSON.stringify(tag);
+      }
+      updateAllElements();
+
+      return;
+    }
+
     if (e.clientX < editor.areaselect.x && e.clientY < editor.areaselect.y)
       bounds = [e.clientX, e.clientY, editor.areaselect.x, editor.areaselect.y]
     else if (e.clientX < editor.areaselect.x)
       bounds = [e.clientX, editor.areaselect.y, editor.areaselect.x, e.clientY]
     else if (e.clientY < editor.areaselect.y)
       bounds = [editor.areaselect.x, e.clientY, e.clientX, editor.areaselect.y];
+
 
     const all = document.getElementById('viewport').children;
     editor.selected = [];
@@ -557,6 +597,10 @@ document.body.onmouseup = function (e)
       let allPeaksEnabled = true;
       let hasArrow = false;
 
+      let allBold = true;
+      let allItalic = true;
+      let allUnderline = true;
+
       for (let t of inRange)
       {
         if (t.type != 'Arrow')
@@ -566,6 +610,15 @@ document.body.onmouseup = function (e)
 
           if (t.size != inRange[0].size)
             sameSize = false;
+
+          if (!t.isBold)
+            allBold = false;
+
+          if (!t.isItalic)
+            allItalic = false;
+
+          if (!t.isUnderlined)
+            allUnderline = false;
         }
         else
         {
@@ -588,6 +641,10 @@ document.body.onmouseup = function (e)
       else
         fontPickerSize.value = 'None';
 
+      document.getElementById('btn-bold').classList[allBold ? 'add' : 'remove']('active');
+      document.getElementById('btn-italic').classList[allItalic ? 'add' : 'remove']('active');
+      document.getElementById('btn-underline').classList[allUnderline ? 'add' : 'remove']('active');
+
       if (hasArrow)
       {
         if (allPeaksDisabled)
@@ -596,6 +653,7 @@ document.body.onmouseup = function (e)
         if (allPeaksEnabled)
           document.getElementById('btn-peak').classList.remove('active'); 
       }
+      
     }
   }
   else if (editor.dragging)
@@ -607,6 +665,23 @@ document.body.onmouseup = function (e)
     const tag = JSON.parse(box.dataset['tag']);
     fontPickerFamily.value = tag.face;
     fontPickerSize.value = tag.size;
+
+    /**
+     * Set all util buttons
+     * HACK: Negate editor values and then click all of 'em
+     */
+
+    editor.utils.bold = !tag.isBold;
+    editor.utils.italic = !tag.isItalic;
+    editor.utils.underline = !tag.isUnderlined;
+
+    document.getElementById('btn-bold').click();
+    document.getElementById('btn-italic').click();
+    document.getElementById('btn-underline').click();
+
+    /**
+     * Handle arrows
+     */
 
     if (tag.type == 'Arrow' && tag.arrow.head)
     {
@@ -769,7 +844,6 @@ const evtTogglePathing = function (e)
 {
   editor.pathing = !editor.pathing;
   const pathBtn = document.getElementById('btn-path');
-  const peakBtn = document.getElementById('btn-peak');
 
   if (editor.pathing)
   {
@@ -785,27 +859,42 @@ const evtTogglePathing = function (e)
 
 const evtToggleBold = function (e)
 {  
+  // 1st - toggle
+  editor.utils.bold = !editor.utils.bold;
+  document.getElementById('btn-bold').classList[editor.utils.bold ? 'add' : 'remove']('active');
+
+  // 2nd - apply
   eachSelected((id, box, tag) => 
   {
-    tag.isBold = !tag.isBold;
+    tag.isBold = editor.utils.bold;
     return tag;
-  })
+})
 }
 
 const evtToggleItalic = function (e)
 {
+  // 1st - toggle
+  editor.utils.italic = !editor.utils.italic;
+  document.getElementById('btn-italic').classList[editor.utils.italic ? 'add' : 'remove']('active');
+
+  // 2nd - apply
   eachSelected((id, box, tag) => 
   {
-    tag.isItalic = !tag.isItalic;
+    tag.isItalic = editor.utils.italic;
     return tag;
   })
 }
 
 const evtToggleUnderline = function (e)
 {
+  // 1st - toggle
+  editor.utils.underline = !editor.utils.underline;
+  document.getElementById('btn-underline').classList[editor.utils.underline ? 'add' : 'remove']('active');
+
+  // 2nd - apply
   eachSelected((id, box, tag) => 
   {
-    tag.isUnderlined = !tag.isUnderlined;
+    tag.isUnderlined = editor.utils.underline;
     return tag;
   })
 }
@@ -820,11 +909,7 @@ const evtTogglePeaks = function (e)
 {
   const peakBtn = document.getElementById('btn-peak');
   editor.usePeak = !editor.usePeak;
-
-  if (editor.usePeak == false)
-    peakBtn.classList.add('active');
-  else
-    peakBtn.classList.remove('active');
+  peakBtn.classList[editor.usePeak ? 'remove' : 'add']('active');
     
   eachSelected((id, box, tag) => 
   {
@@ -871,11 +956,26 @@ const evtShortener = function (e)
 const evtToggleGrid = function (e)
 {
   editor.gridEnabled = !editor.gridEnabled;
+  document.getElementById('btn-grid').classList[editor.gridEnabled ? 'add' : 'remove']('active');
+}
 
-  if (editor.gridEnabled)
-    document.getElementById('btn-grid').classList.add('active');
-  else
-    document.getElementById('btn-grid').classList.remove('active');
+const evtSelectAll = function (e)
+{
+  const elements = document.getElementsByClassName('DiagramElement');
+  editor.selected = [];
+  for (let element of elements)
+    editor.selected.push(element.id);
+  updateAllElements();
+}
+
+const evtUndo = function (e)
+{
+  historyUndo();
+}
+
+const evtRedo = function (e)
+{
+  historyRecord();
 }
 
 /**
@@ -886,7 +986,9 @@ const keyboardEventTable = [];
 
 const eventHookUp = function (funct, id, key = null, ctrl = false)
 {
-  document.getElementById(id).onclick = funct;
+  if (id != null)
+    document.getElementById(id).onclick = funct;
+
   if (key != null)
     keyboardEventTable[`${ctrl ? 'CT' : ''}_${key}`] = funct;
 }
@@ -906,6 +1008,72 @@ const initEvents = function ()
   eventHookUp(evtShortener, 'btn-shorter', '-', true);
   eventHookUp(evtWidener, 'btn-wider', '=', true);
 
+  eventHookUp(evtSelectAll, null, 'a', true);
 
+  eventHookUp(evtUndo, 'btn-undo', 'z', true);
+  eventHookUp(evtRedo, 'btn-redo', 'y', true);
+}
 
+/**
+ * History Storage Manager Module
+ */
+
+const __max_history_size = 64;
+let history = []; 
+let redo = []; /* uncontrolled might overflow or leak */
+
+const initHistory = function ()
+{
+  for (let i = 0; i < __max_history_size; i++)
+    history.push(null);
+}
+
+const historyRecord = function ()
+{
+  if (editor.selected.length > 1 && editor.dragging)
+    return;
+
+  if (document.getElementById('viewport').innerHTML == history[0])
+    return;
+
+  /* clear redo scope */
+  redo = [];
+
+  /* move entries */
+  for (let i = __max_history_size - 1; i > 0; i--)
+    history[i] = history[i - 1];
+
+  /* remember */
+  history[0] = document.getElementById('viewport').innerHTML;
+
+  console.log(history);
+}
+
+const historyUndo = function ()
+{
+  /* buffer up redo */
+  redo.push(history[0]);
+
+  /* shift back history */
+  for (let i = 0; i < __max_history_size - 1; i++)
+    history[i] = history[i + 1];
+
+  /* restore state */
+  if (history[0] != null)
+    document.getElementById('viewport').innerHTML = history[0];
+
+  /* last place gets forgotten */
+  history[__max_history_size - 1] = null;
+}
+
+const historyRedo = function ()
+{
+  const lastRedoState = redo.pop();
+  /* move entries */
+  for (let i = __max_history_size - 1; i >= 0; i--)
+    history[i] = history[i + 1];
+
+  history[0] = lastRedoState;
+  if (lastRedoState != null)
+    document.getElementById('viewport').innerHTML = lastRedoState;
 }
