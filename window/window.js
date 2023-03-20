@@ -115,8 +115,8 @@ const spawnAnItem = function (itemName)
       class="DiagramElement ${itemName}Element" 
       id="${itemId}" 
       data-tag='${JSON.stringify(itemTag)}' 
-      onmousedown="moveObject('${itemId}', event)" 
-      onclick="selectItem('${itemId}');"
+      onmousedown="moveObject(this.id, event)" 
+      onclick="selectItem(this.id);"
     > 
       <div ondblclick="this.contentEditable = true; this.focus(); selectTextElement(this)">
         ${itemName}
@@ -426,12 +426,28 @@ const isFarViewport = function (node)
   return false;
 }
 
+const initBackIcons = function ()
+{
+  setInterval(() => 
+  {
+    const state = editor.selected.length > 0
+      ? '1.0'
+      : '0.2';
+
+    document.getElementById('btn-copy').style = `opacity: ${state}`;
+    document.getElementById('btn-cut').style = `opacity: ${state}`;
+    document.getElementById('btn-remove').style = `opacity: ${state}`;
+
+  }, 1000 / 5);
+}
+
 document.body.onload = function ()
 {
   initToolSet();
   initFonts();
   initEvents();
   initHistory();
+  initBackIcons();
   searchTool('');
   historyRecord(); /* first possible state */
 }
@@ -553,8 +569,8 @@ document.body.onmouseup = function (e)
       for (let ele of allElements)
       {
         const tag = JSON.parse(ele.dataset['tag']);
-        tag.x += vx;
-        tag.y += vy;
+        tag.x += vx * -1;
+        tag.y += vy * -1;
         ele.dataset['tag'] = JSON.stringify(tag);
       }
       updateAllElements();
@@ -903,6 +919,7 @@ const evtRemove = function (e)
 {
   for (let id of editor.selected)
     document.getElementById(id).remove();
+  editor.selected = [];
 }
 
 const evtTogglePeaks = function (e)
@@ -975,7 +992,71 @@ const evtUndo = function (e)
 
 const evtRedo = function (e)
 {
-  historyRecord();
+  historyRedo();
+}
+
+const evtCopy = function (e)
+{
+  let htmlcontents = '';
+  for (let sel of editor.selected)
+  {
+    const ele = document.getElementById(sel);
+    htmlcontents += ele.outerHTML;
+  }
+
+  const pastableObject =
+  {
+    isPastable: true,
+    htmcontents: htmlcontents
+  }
+  navigator.clipboard.writeText(JSON.stringify(pastableObject));
+}
+
+const evtCut = function (e)
+{
+  evtCopy(e);
+  evtRemove(e);
+}
+
+const evtPaste = function (e)
+{
+  navigator.clipboard.readText().then((text) => 
+  {
+    try
+    {
+      const pobj = JSON.parse(text);
+
+      if (pobj.isPastable != true)
+        return;
+
+      const DOMP = document.createElement('div');
+      DOMP.innerHTML = pobj.htmcontents;
+      editor.selected = [];
+
+      for (let ele of DOMP.children)
+      { /* rebound to new random id */
+        const tag = JSON.parse(ele.dataset['tag']);
+        tag.id = crypto.randomUUID();
+        tag.x += 25; tag.y += 25;
+        tag.z = editor.zindexing;
+        editor.zindexing++;
+        ele.dataset['tag'] = JSON.stringify(tag);
+        ele.id = tag.id;
+        // move to viewport
+        document.getElementById('viewport').innerHTML += ele.outerHTML;
+        editor.selected.push(tag.id);
+      }
+
+      DOMP.remove();
+      updateAllElements();
+      evtCopy(e);
+    }
+    catch (e)
+    {
+      console.log(e);
+      ; // dont care
+    }
+  })
 }
 
 /**
@@ -996,8 +1077,8 @@ const eventHookUp = function (funct, id, key = null, ctrl = false)
 const initEvents = function ()
 {
   eventHookUp(evtRemove, 'btn-remove', 'Delete');
-  eventHookUp(evtTogglePeaks, 'btn-peak', 'Enter');
-  eventHookUp(evtTogglePathing, 'btn-path', ' ');
+  eventHookUp(evtTogglePeaks, 'btn-peak', ' ');
+  eventHookUp(evtTogglePathing, 'btn-path', 'Enter');
   eventHookUp(evtToggleGrid, 'btn-grid', 'g', true);
 
   eventHookUp(evtToggleBold, 'btn-bold', 'b', true);
@@ -1012,13 +1093,17 @@ const initEvents = function ()
 
   eventHookUp(evtUndo, 'btn-undo', 'z', true);
   eventHookUp(evtRedo, 'btn-redo', 'y', true);
+
+  eventHookUp(evtCopy, 'btn-copy', 'c', true);
+  eventHookUp(evtCut, 'btn-cut', 'x', true);
+  eventHookUp(evtPaste, 'btn-paste', 'v', true);
 }
 
 /**
  * History Storage Manager Module
  */
 
-const __max_history_size = 64;
+const __max_history_size = 0xFF;
 let history = []; 
 let redo = []; /* uncontrolled might overflow or leak */
 
@@ -1032,6 +1117,7 @@ const historyRecord = function ()
 {
   if (history.filter(e => e != null).length > 1)
     document.getElementById('btn-undo').style = "opacity: 1.0"
+
   if (editor.selected.length > 1 && editor.dragging)
     return;
 
@@ -1040,6 +1126,7 @@ const historyRecord = function ()
 
   /* clear redo scope */
   redo = [];
+  document.getElementById('btn-redo').style = 'opacity: 0.2';
 
   /* move entries */
   for (let i = __max_history_size - 1; i > 0; i--)
@@ -1077,12 +1164,20 @@ const historyUndo = function ()
 
 const historyRedo = function ()
 {
+  if (redo.length <= 0)
+    return; // impossible
+
   const lastRedoState = redo.pop();
+
   /* move entries */
-  for (let i = __max_history_size - 1; i >= 0; i--)
-    history[i] = history[i + 1];
+  for (let i = __max_history_size - 1; i > 0; i--)
+    history[i] = history[i - 1];
 
   history[0] = lastRedoState;
   if (lastRedoState != null)
     document.getElementById('viewport').innerHTML = lastRedoState;
+
+  /* handle button visuals */
+  if (redo.length <= 0)
+    document.getElementById('btn-redo').style = 'opacity: 0.2';
 }
