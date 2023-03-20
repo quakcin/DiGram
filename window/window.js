@@ -1030,6 +1030,8 @@ const initHistory = function ()
 
 const historyRecord = function ()
 {
+  if (history.filter(e => e != null).length > 1)
+    document.getElementById('btn-undo').style = "opacity: 1.0"
   if (editor.selected.length > 1 && editor.dragging)
     return;
 
@@ -1050,9 +1052,13 @@ const historyRecord = function ()
 }
 
 const historyUndo = function ()
-{
+{  
+  if (history.filter(e => e != null).length < 2)
+    return;
+
   /* buffer up redo */
   redo.push(history[0]);
+  document.getElementById('btn-redo').style = "opacity: 1.0"
 
   /* shift back history */
   for (let i = 0; i < __max_history_size - 1; i++)
@@ -1064,6 +1070,9 @@ const historyUndo = function ()
 
   /* last place gets forgotten */
   history[__max_history_size - 1] = null;
+
+  if (history.filter(e => e != null).length < 2)
+    document.getElementById('btn-undo').style = "opacity: 0.2";
 }
 
 const historyRedo = function ()
