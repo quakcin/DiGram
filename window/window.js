@@ -1059,6 +1059,134 @@ const evtPaste = function (e)
   })
 }
 
+const evtExport = function (type = 'image/png')
+{
+  /* Find image bounds */
+
+  const all = document.getElementsByClassName('DiagramElement');
+  let [lx, ly, hx, hy] = [0xFFFFF, 0xFFFFF, -0xFFFFF, -0xFFFFF];
+
+  for (let elem of all)
+  {
+    const tag = JSON.parse(elem.dataset['tag']);
+    const style = getComputedStyle(elem);
+    const ehei = parseInt(style.height.slice(0, -2));
+
+    lx = Math.min(lx, tag.x - 25);
+    hx = Math.max(hx, tag.x + tag.width + 25);
+
+    ly = Math.min(ly, tag.y - 25);
+    hy = Math.max(hy, tag.y + ehei + 25);
+  }
+
+  const [w, h] = [hx - lx, hy - ly];
+
+  /* Create fitting canvas */
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  // canvas.style="position: fixed; left: 400px; top: 100px; z-index:21372137";
+
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, w, h);
+
+  /* imprint things on canvas */
+
+  const sprites = {};
+
+  for (let t of toolSet)
+  {
+    const img = document.createElement('img');
+    img.src = t.icon;
+    sprites[t.name] = img;
+  }
+
+  for (let elem of all)
+  {
+    const tag = JSON.parse(elem.dataset['tag']);
+    tag.x -= lx; tag.y -= ly;
+
+    if (tag.type == 'Arrow')
+    {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(tag.x - 2, tag.y - 2, tag.width + 3, tag.height + 3);
+
+      if (tag.arrow.head == false)
+        continue;  
+
+      const _a = 20;
+      const _h = (_a * Math.sqrt(3)) / 2;
+      ctx.beginPath();
+        if (tag.dir == 'down')
+        {
+          ctx.moveTo(tag.x, tag.y + tag.height + _h);
+          ctx.lineTo(tag.x - _a/2, tag.height + tag.y);
+          ctx.lineTo(tag.x + _a/2, tag.height + tag.y);
+        }
+        else if (tag.dir == 'up')
+        {
+          ctx.moveTo(tag.x, tag.y - _h);
+          ctx.lineTo(tag.x - _a/2, tag.y);
+          ctx.lineTo(tag.x + _a/2, tag.y);
+        }
+        else if (tag.dir == 'left')
+        {
+          ctx.moveTo(tag.x - _h, tag.y);
+          ctx.lineTo(tag.x, tag.y - _a/2);
+          ctx.lineTo(tag.x, tag.y + _a/2);
+        }
+        else if (tag.dir == 'right')
+        {
+          ctx.moveTo(tag.x + tag.width + _h, tag.y);
+          ctx.lineTo(tag.x + tag.width, tag.y - _a/2);
+          ctx.lineTo(tag.x + tag.width , tag.y + _a/2);
+        }
+
+      ctx.fill();
+
+      continue;
+    }
+
+    const style = getComputedStyle(elem);
+    const ehei = style.getPropertyValue('height').slice(0, -2);
+    const ewid = style.getPropertyValue('width').slice(0, -2);
+
+    ctx.fillStyle = 'black';
+    if (tag.type != 'Tekst')
+      ctx.drawImage(sprites[tag.type], tag.x, tag.y, ewid, ehei);
+
+    /* write text */
+    ctx.font = `${tag.size}px ${tag.face}`;
+    ctx.fillStyle = tag.type != 'Tekst' ? 'white' : 'black';
+    ctx.textBaseline="middle"
+    ctx.textAlign = 'left';
+
+    if (tag.type == 'Przetwarzanie')
+    {
+      ctx.fillText(elem.textContent, tag.x - tag.width / 4, tag.y + ehei / 2);
+    }
+    else
+    {
+      const measured = ctx.measureText(elem.textContent);
+      ctx.fillText(elem.textContent, tag.x + (ewid - measured.width) / 2 - 5, tag.y + ehei / 2);
+    }
+  }
+
+  /**
+   * Force Save
+   */
+
+  const imageUrl = canvas
+    .toDataURL(type)
+    .replace(type, "image/octet-stream");  
+
+  window.location.href = imageUrl;
+  canvas.remove();
+
+}
+
 /**
  * Simple eventManager
  */
