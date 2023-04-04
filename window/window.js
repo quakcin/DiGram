@@ -1451,7 +1451,7 @@ const evtGenerate = function (e)
       if (block.type != 'Początek')
       {
         /* code gen */
-        __code += `${block.label}:\n`;
+        __code += `${block.label}: ;\n`;
       }
       else
       {
