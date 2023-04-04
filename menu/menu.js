@@ -22,8 +22,8 @@ exports.applyMainMenu = (win) =>
       submenu: 
       [
         { label: 'Nowy' },
-        { label: 'Otwórz' },
-        { label: 'Zapisz' },
+        { label: 'Otwórz', wired: 'evtOpen()' },
+        { label: 'Zapisz', wired: 'evtSave()' },
         { 
           label: 'Exportuj', 
           submenu:

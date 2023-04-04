@@ -1117,7 +1117,7 @@ const evtExport = function (type = 'image/png')
         continue;  
 
       const _a = 20;
-      const _h = (_a * Math.sqrt(3)) / 2;
+      const _h = (_a * Math.sqrt(3)) / 3;
       ctx.beginPath();
         if (tag.dir == 'down')
         {
@@ -1161,16 +1161,18 @@ const evtExport = function (type = 'image/png')
     ctx.font = `${tag.size}px ${tag.face}`;
     ctx.fillStyle = tag.type != 'Tekst' ? 'white' : 'black';
     ctx.textBaseline="middle"
-    ctx.textAlign = 'left';
+
+    const str = elem.textContent.trim();
 
     if (tag.type == 'Przetwarzanie')
     {
-      ctx.fillText(elem.textContent, tag.x - tag.width / 4, tag.y + ehei / 2);
+      ctx.textAlign = 'start';
+      ctx.fillText(str, tag.x + 5, tag.y + ehei / 2);
     }
     else
     {
-      const measured = ctx.measureText(elem.textContent);
-      ctx.fillText(elem.textContent, tag.x + (ewid - measured.width) / 2 - 5, tag.y + ehei / 2);
+      ctx.textAlign = 'center';
+      ctx.fillText(str, tag.x + ewid / 2, tag.y + ehei / 2);
     }
   }
 
@@ -1182,9 +1184,48 @@ const evtExport = function (type = 'image/png')
     .toDataURL(type)
     .replace(type, "image/octet-stream");  
 
-  window.location.href = imageUrl;
+  // window.location.href = imageUrl;
+  const hwhandle = document.createElement('a');
+  hwhandle.href = imageUrl;
+  hwhandle.download = `diagram.${type.split('/').at(-1)}`;
+  document.body.appendChild(hwhandle);
+  hwhandle.click();
+  hwhandle.remove();
   canvas.remove();
 
+}
+
+const evtSave = function (e)
+{
+  const proj = btoa(encodeURI(document.getElementById('viewport').innerHTML));
+  const blob = new Blob([proj], { type: 'text/plain' });
+  const hwhandle = document.createElement('a');
+  hwhandle.href = URL.createObjectURL(blob);
+  hwhandle.download = "project.diag";
+  document.body.appendChild(hwhandle);
+  hwhandle.click();
+  URL.revokeObjectURL(hwhandle.href);
+  hwhandle.remove();
+}
+
+
+const evtOpen = function (e)
+{
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.diag';
+  input.onchange = (e) => 
+  {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (m) => 
+    {
+      const contents = reader.result;
+      document.getElementById('viewport').innerHTML = decodeURI(atob(contents));
+    }
+    reader.readAsText(file);
+  }
+  input.click();
 }
 
 /**
@@ -1225,6 +1266,9 @@ const initEvents = function ()
   eventHookUp(evtCopy, 'btn-copy', 'c', true);
   eventHookUp(evtCut, 'btn-cut', 'x', true);
   eventHookUp(evtPaste, 'btn-paste', 'v', true);
+
+  eventHookUp(evtSave, null, 's', true);
+  eventHookUp(evtOpen, null, 'o', true);
 }
 
 /**
