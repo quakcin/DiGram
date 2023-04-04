@@ -21,9 +21,9 @@ exports.applyMainMenu = (win) =>
       label: 'Plik',
       submenu: 
       [
-        { label: 'Nowy' },
-        { label: 'Otwórz', wired: 'evtOpen()' },
-        { label: 'Zapisz', wired: 'evtSave()' },
+        { label: 'Nowy', wired: 'evtNew' },
+        { label: 'Otwórz', wired: 'evtOpen' },
+        { label: 'Zapisz', wired: 'evtSave' },
         { 
           label: 'Exportuj', 
           submenu:
@@ -41,22 +41,22 @@ exports.applyMainMenu = (win) =>
       [
         { label: 'Cofnij', wired: 'evtUndo' },
         { label: 'Przywróć', wired: 'evtRedo' },
-        { label: 'Zaznacz wszystko', wired: 'evtRedo' },
-        { label: 'Usuń', wired: 'evtRedo' },
-        { label: 'Kopiuj', wired: 'evtRedo' },
-        { label: 'Wklej', wired: 'evtRedo' },
-        { label: 'Wytnij', wired: 'evtRedo' },
+        { label: 'Zaznacz wszystko', wired: 'evtSelectAll' },
+        { label: 'Usuń', wired: 'evtRemove' },
+        { label: 'Kopiuj', wired: 'evtCopy' },
+        { label: 'Wklej', wired: 'evtPaste' },
+        { label: 'Wytnij', wired: 'evtCut' },
       ]
     },
     {
       label: 'Narzędzia',
       submenu: 
       [
-        { label: 'Rysowanie Linii', wired: '' },
-        { label: 'Grot Strzałki', wired: '' },
-        { label: 'Pogróbienie', wired: '' },
-        { label: 'Kursywa', wired: '' },
-        { label: 'Podkreślenie', wired: '' },
+        { label: 'Rysowanie Linii', wired: 'evtTogglePathing' },
+        { label: 'Grot Strzałki', wired: 'evtTogglePeaks' },
+        { label: 'Pogróbienie', wired: 'evtToggleBold' },
+        { label: 'Kursywa', wired: 'evtToggleItalic' },
+        { label: 'Podkreślenie', wired: 'evtToggleUnderline' },
 
       ]
     },
@@ -65,7 +65,7 @@ exports.applyMainMenu = (win) =>
       submenu: 
       [
         { label: 'Weryfikuj', wired: '' },
-        { label: 'Generuj', wired: '' },
+        { label: 'Generuj', wired: 'evtGenerate' },
       ]
     },
     {

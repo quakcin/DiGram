@@ -208,7 +208,7 @@ const spawnAnArrow = function (x, y, w, h, dir)
     arrow: 
     {
       head: editor.usePeak
-    }
+    },
   }
 
   const ht = `
@@ -409,6 +409,9 @@ const initFonts = function ()
 
 const selectTextElement = function (element)
 {
+  if (element.textContent.trim() == '')
+    return;
+
   const range = document.createRange();
   range.selectNodeContents(element);
   window.getSelection().removeAllRanges();
@@ -493,7 +496,6 @@ document.body.onmouseup = function (e)
     
     if (editor.areaselect.enabled)
     { /* 2nd anchor */
-
       const dx = editor.areaselect.x - e.clientX;
       const dy = editor.areaselect.y - e.clientY;
       let dir = null;
@@ -1063,7 +1065,16 @@ const evtExport = function (type = 'image/png')
 {
   /* Find image bounds */
 
-  const all = document.getElementsByClassName('DiagramElement');
+  const allUnsorted = document.getElementsByClassName('DiagramElement');
+  const allBounded = [];
+
+  for (let elem of allUnsorted)
+    allBounded.push(elem);
+
+  console.log(allBounded);
+
+  const all = allBounded.sort((a, b) => JSON.parse(a.dataset['tag']).z - JSON.parse(b.dataset['tag']).z);
+
   let [lx, ly, hx, hy] = [0xFFFFF, 0xFFFFF, -0xFFFFF, -0xFFFFF];
 
   for (let elem of all)
@@ -1228,6 +1239,317 @@ const evtOpen = function (e)
   input.click();
 }
 
+const evtNew = function (e)
+{
+  if (confirm("Czy aby na pewno chcesz utworzyć nowy projekt?") == false)
+    return;
+
+  const all = document.getElementsByClassName('DiagramElement');
+  for (let i = all.length - 1; i >= 0; i--)
+    all[i].remove();
+}
+
+
+const evtGenerate = function (e)
+{
+  /**
+   * Heap all stuff
+   */
+
+  const all = [];
+  const entries = [];
+  const arrows = [];
+
+
+  let labelidx = 0;
+  for (let elem of document.getElementsByClassName('DiagramElement'))
+  { /* precomute css sizes */
+
+    const style = getComputedStyle(elem);
+    const tag = JSON.parse(elem.dataset['tag']);
+
+    if (tag.type != 'Arrow')
+    {
+      const wid = parseInt(style.width.slice(0, -2));
+      const hei = parseInt(style.height.slice(0, -2));
+      tag.width = wid;
+      tag.height = hei;
+      tag.label = `_label_${labelidx++}`;
+      tag.content = elem.textContent.trim();
+    } 
+    else
+    {
+      let ax = tag.x;
+      let ay = tag.y;
+      let ex = tag.x;
+      let ey = tag.y;
+
+      if (tag.dir == 'up')
+        ay += tag.height;
+      else if (tag.dir == 'left')
+        ax += tag.width;
+      else if (tag.dir == 'down')
+        ey += tag.height;
+      else if (tag.dir == 'right')
+        ex += tag.width;
+
+      tag.ax = ax;
+      tag.ay = ay;
+      tag.ex = ex;
+      tag.ey = ey;
+
+      arrows.push(tag);
+    }
+
+    all.push(tag);
+
+    if (tag.type == 'Początek')
+      entries.push(tag);
+  }
+
+  /**
+   * Important utils
+   */
+
+
+  const joinedBlock = function (cx, cy)
+  {
+    for (let block of all)
+    {
+      if (block.type == 'Arrow' || block.type == 'Tekst')
+        continue;
+        
+      const x = block.x - 40;
+      const y = block.y - 40;
+      const dx = block.x + block.width + 40;
+      const dy = block.y + block.height + 40;
+
+      if (cx > x && cx < dx && cy > y && cy < dy)
+        return block;
+    }
+
+    return null;
+  }
+
+  const joinedArrow = function (cx, cy)
+  {
+
+    /**
+     * TODO:
+     * Check for multiple bindings
+     */
+    for (let arr of arrows)
+    {
+      const x = arr.ax - 30;
+      const y = arr.ay - 30;
+      const dx = arr.ax + 30;
+      const dy = arr.ay + 30;
+
+      // console.log('TESTING', cx, cy, 'with', x, y, dx, dy);
+
+      if (cx > x && cx < dx && cy > y && cy < dy)
+        return arr;
+    }
+    return null;
+  }
+
+  const allOutingArrows = function (fromTag)
+  {
+    const x = fromTag.x - 30;
+    const y = fromTag.y - 30;
+    const dx = fromTag.x + fromTag.width + 30;
+    const dy = fromTag.y + fromTag.height + 30;
+    const outs = [];
+
+    for (let arrow of arrows)
+      if (arrow.ax > x && arrow.ax < dx && arrow.ay > y && arrow.ay < dy)
+        outs.push(arrow);
+
+    return outs;
+  }
+
+  const nearestText = function (cx, cy)
+  {
+    console.log('looking for nearest text to ', cx, cy);
+    let best = null;
+
+    for (let text of all)
+    {
+      if (text.type != 'Tekst')
+        continue;
+
+      const ix = text.x + text.width / 2;
+      const iy = text.y + text.height / 2;
+      const dist = Math.sqrt(Math.pow(ix - cx, 2) + Math.pow(iy - cy, 2));
+      text.dist = dist;
+
+      console.log('compeling dist', dist, ix, iy, best, text);
+
+      if (best == null)
+      {
+        best = text;
+        continue;
+      }
+
+
+      if (best.dist > text.dist)
+      {
+        best = text;
+      }
+    }
+
+    return best;
+  }
+
+  const traversePath = function (arrow)
+  {
+    let currentArrow = arrow;
+
+    while (true)
+    {
+      const jb = joinedBlock(currentArrow.ex, currentArrow.ey);
+      console.log('JOINED BLOCK', jb);
+
+      if (jb != null)
+      {
+        return jb;
+      }
+      else
+      { /* look for joined arrows */
+        currentArrow = joinedArrow(currentArrow.ex, currentArrow.ey);
+        console.log('Joining another arrow', currentArrow);
+        if (currentArrow == null)
+        {
+          console.log('NO MORE ARROWS ON PATH, UNCONNCEDTED ERROR')
+          return null;
+        }
+      }
+    }
+  }
+
+  /**
+   * Generate separate code for each entry
+   */
+
+  let __codes = "";
+  let __predefs = `#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n\n`;
+
+  for (let entry of entries)
+  {
+    let __code = "";
+    /* fun begins */
+    const blocks = [];
+    const seen = [];
+    blocks.push(entry);
+    let next = null;
+
+    while (blocks.length > 0)
+    {
+      const block = blocks[0];
+      let loopBack = null;
+
+      if (block.type != 'Początek')
+      {
+        /* code gen */
+        __code += `${block.label}:\n`;
+      }
+      else
+      {
+        __predefs += `${block.content};\n`;
+      }
+
+      if (block.type == 'Warunek')
+      { /* magia */
+
+        const outs = allOutingArrows(block);
+
+        for (let o of outs)
+        {
+          const dest = traversePath(o);
+
+          if (dest == null)
+          {
+            console.log('[] Pain and suffering failed us misserably\n');
+            return;
+          }
+
+          const quanta = nearestText(o.ax, o.ay).content;
+
+          __code += `\tif (${block.content} ${quanta})\n\t\tgoto ${dest.label};\n\n`;
+
+          if (seen.includes(dest.label) == false)
+            blocks.push(dest);
+        }
+
+      }
+      else if (block.type != 'Koniec')
+      {
+        /* find nearest outing node */
+        const outting = allOutingArrows(block);
+
+        if (outting.length == 0 || outting.length > 1)
+        {
+          console.log("ERROR, NONE OR more then one arrow outing");
+          console.log(block, 'outting', outting);
+        }
+
+        const nextBlock = traversePath(outting[0]);
+      
+        if (nextBlock == null)
+        {
+          console.log('No consecutive block joined');
+          return;
+        }
+
+        /* next block to traverse, unless allready seen */
+        if (seen.includes(nextBlock.label) == false)
+          next = nextBlock;
+        else
+          loopBack = nextBlock.label;
+
+      }
+
+      if (block.type != 'Warunek')
+      {
+        /* code gen */
+        if (block.type == 'Początek')
+          __code += `${block.content}\n{\n`;
+        else
+          __code += `\t${block.content}\n\n`;
+
+        if (loopBack != null)
+          __code += `\tgoto ${loopBack};\n\n`;
+      }
+
+      /* we've seen that one */
+      seen.push(blocks[0].label);
+      if (next == null)
+        blocks.splice(0, 1);
+      else
+        blocks[0] = next;
+      next = null;
+    }
+
+    __code += `}\n\n`;
+    __codes += __code;
+
+  }
+
+  const final = __predefs + '\n' + __codes;
+
+  /* spew out code */
+  const blob = new Blob([final], { type: 'text/plain' });
+  const hwhandle = document.createElement('a');
+  hwhandle.href = URL.createObjectURL(blob);
+  hwhandle.download = "source.c";
+  document.body.appendChild(hwhandle);
+  hwhandle.click();
+  URL.revokeObjectURL(hwhandle.href);
+  hwhandle.remove();
+
+
+}
+
 /**
  * Simple eventManager
  */
@@ -1269,6 +1591,7 @@ const initEvents = function ()
 
   eventHookUp(evtSave, null, 's', true);
   eventHookUp(evtOpen, null, 'o', true);
+  eventHookUp(evtNew, null, 'n', true);
 }
 
 /**
