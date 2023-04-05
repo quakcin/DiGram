@@ -1352,7 +1352,7 @@ const markError = function (tagSet, errorState = true)
 
 const evtVeryfi = function (e)
 {
-  evtUnmarkErrors();
+  evtUnmarkErrors()
   __generator(true);
   updateAllElements();
 }
@@ -1589,6 +1589,13 @@ const __generator = function ( doNotSave = false )
 
         const outs = allOutingArrows(block);
 
+        if (outs.length == 0)
+        {
+          markError(block);
+          alert("Blok warunkowy bez żadnych opcji");
+          return;
+        }
+
         for (let o of outs)
         {
           const dest = traversePath(o);
@@ -1687,6 +1694,7 @@ const __generator = function ( doNotSave = false )
   }
 
   /* check if all blocks were seen */
+  let hasMissingElements = false;
 
   for (let tag of all)
   {
@@ -1696,9 +1704,14 @@ const __generator = function ( doNotSave = false )
     if (tag.seen == false)
     {
       markError(tag);
-      alert("Element znajduje się poza diagramem");
-      return; 
+      hasMissingElements = true;
     }
+  }
+
+  if (hasMissingElements)
+  {
+    alert("Element znajduje się poza diagramem");
+    return; 
   }
 
   /* sanitize labels */
