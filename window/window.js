@@ -41,6 +41,11 @@ const initToolSet = function ()
     name: "Koniec",
     icon: "../icons/stop.png"
   });
+  // toolSet.push /* brak syntaktycznego sensu, jeżeli połowa kodu jest pisana w czystym natywnym języku a jeden wyjątek w swoim własnym */
+  // ({
+  //   name: "Biblioteki",
+  //   icon: "../icons/libs.png"
+  // });
   toolSet.push
   ({
     name: "Tekst",
@@ -107,7 +112,8 @@ const spawnAnItem = function (itemName)
     size: document.getElementById('fontPickerSize').value,
     isBold: editor.utils.bold,
     isItalic: editor.utils.italic,
-    isUnderlined: editor.utils.underline
+    isUnderlined: editor.utils.underline,
+    error: false
   }
 
   const ht = `
@@ -118,7 +124,7 @@ const spawnAnItem = function (itemName)
       onmousedown="moveObject(this.id, event)" 
       onclick="selectItem(this.id);"
     > 
-      <div ondblclick="this.contentEditable = true; this.focus(); selectTextElement(this)">
+      <div ondblclick="__block_edit_event(event)">
         ${itemName}
       </div>  
     </div>
@@ -126,6 +132,15 @@ const spawnAnItem = function (itemName)
   document.getElementById('viewport').innerHTML += ht;
   // historyRecord();
   return itemId;
+}
+
+const __block_edit_event = function (e)
+{
+  const elem = e.target;
+  elem.contentEditable = true;
+  elem.focus();
+  selectTextElement(elem)
+  editor.isUserTyping = true;
 }
 
 const spawnAnArrow = function (x, y, w, h, dir)
@@ -205,6 +220,7 @@ const spawnAnArrow = function (x, y, w, h, dir)
     isBold: false,
     isItalic: false,
     isUnderlined: false,
+    error: false,
     arrow: 
     {
       head: editor.usePeak
@@ -231,9 +247,9 @@ const updateElement = function (id)
 {
     const box = document.getElementById(id);
     const tag = JSON.parse(box.dataset['tag']);
-    const isSelected = editor.selected.includes(id);
+    const isSelected = editor.selected.includes(id) ? '#C59624' : 'transparent';
 
-    const borderColor = isSelected ? '#C59624' : 'transparent';
+    const borderColor = tag.error ? 'red' : isSelected;
     const borderSize = tag.type == 'Arrow' ? '1px' : '4px';
     const weight = tag.isBold ? 'bold' : 'normal';
     const italic = tag.isItalic ? 'italic' : 'normal';
@@ -287,7 +303,8 @@ const editor =
     bold: false,
     italic: false,
     underline: false
-  }
+  },
+  isUserTyping: false
 };
 
 const moveObject = function (id, e = null)
@@ -457,6 +474,8 @@ document.body.onload = function ()
 
 document.body.onmousedown = function (e)
 {
+  editor.isUserTyping = false;
+
   if (editor.pathing && isFarViewport(e.target))
   {
     if (editor.areaselect.enabled == false)
@@ -787,6 +806,12 @@ document.body.onmousemove = function (e)
 
 document.body.onkeydown = function (e)
 {
+  /**
+   * Supress if user is typing
+   */
+  if (editor.isUserTyping)
+    return;
+
   /**
    * Handle keyboardEventTable
    */
@@ -1250,7 +1275,106 @@ const evtNew = function (e)
 }
 
 
+
+/**
+ * Find all std::libs for given code
+ * @param {*} code 
+ */
+const libLinker = function (code)
+{ 
+  const libs = [];
+
+  libs.push
+  ({
+    name: 'stdlib.h',
+    funs: ['atof', 'atoi', 'int', 'strtod', 'int', 'long', 'calloc', 'free', 'malloc', 'realloc', 'abort', 'atexit', 'exit', 'getenv', 'system', 'bsearch', 'qsort', 'abs', 'div', 'int', 'ldiv', 'rand', 'srand', 'mblen', 'mbstowcs', 'mbtowc', 'wcstombs']
+  });
+
+  libs.push
+  ({
+    name: 'stdio.h',
+    funs: ['fclose', 'clearerr', 'feof', 'ferror', 'fflush', 'fgetpos', 'fopen', 'fread', 'freopen', 'fseek', 'fsetpos', 'int', 'fwrite', 'remove', 'rename', 'rewind', 'setbuf', 'setvbuf', 'tmpfile', 'tmpnam', 'fprintf', 'printf', 'sprintf', 'vfprintf', 'vprintf', 'vsprintf', 'fscanf', 'scanf', 'sscanf', 'fgetc', 'fgets', 'fputc', 'fputs', 'getc', 'getchar', 'gets', 'putc', 'putchar', 'puts', 'ungetc', 'perror']
+  });
+
+  libs.push
+  ({
+    name: 'string.h',
+    funs: ['memchr', 'memcmp', 'memcpy', 'memmove', 'memset', 'strcat', 'strncat', 'strchr', 'strcmp', 'strncmp', 'strcoll', 'strcpy', 'strncpy', 'strcspn', 'strerror', 'strlen', 'strpbrk', 'strrchr', 'strspn', 'strstr', 'strtok']
+  });
+
+  libs.push
+  ({
+    name: 'math.h',
+    funs: ['acos', 'asin', 'atan', 'atan2', 'cos', 'cosh', 'sin', 'sinh', 'tanh', 'exp', 'frexp', 'ldexp', 'log', 'log10', 'modf', 'pow', 'sqrt', 'ceil', 'fabs', 'floor']
+  });
+
+
+  libs.push
+  ({
+    name: 'time.h',
+    funs: ['asctime', 'clock', 'ctime', 'difftime', 'tm', 'tm', 'mktime', 'strftime', 'time']
+  });
+
+  libs.push
+  ({
+    name: 'ctypes.h',
+    funs: ['isalnum', 'isalpha', 'iscntrl', 'isdigit', 'isgraph', 'islower', 'isprint', 'ispunct', 'isspace', 'isupper']
+  });
+
+  libs.push
+  ({
+    name: 'stdbool.h',
+    funs: ['true', 'false', 'bool']
+  });
+  
+  const foundLibs = [];
+
+  for (let l of libs)
+  {
+    for (let f of l.funs)
+      if (code.includes(f))
+      {
+        foundLibs.push(l.name);
+        break;
+      }
+  }
+
+  return foundLibs;
+}
+  
+const markError = function (tagSet, errorState = true)
+{
+  const elem = document.getElementById(tagSet.id);
+  const tag = JSON.parse(elem.dataset['tag']);
+  tag.error = errorState;
+  elem.dataset['tag'] = JSON.stringify(tag);
+}
+
+const evtVeryfi = function (e)
+{
+  evtUnmarkErrors();
+  __generator(true);
+  updateAllElements();
+}
+
+const evtUnmarkErrors = function (e)
+{
+  const all = document.getElementsByClassName('DiagramElement');
+  for (let a of all)
+  {
+    markError({id: a.id}, false);
+  }
+  updateAllElements();
+}
+
 const evtGenerate = function (e)
+{
+  evtUnmarkErrors();
+  __generator();
+  updateAllElements();
+}
+
+const __generator = function ( doNotSave = false )
 {
   /**
    * Heap all stuff
@@ -1267,6 +1391,9 @@ const evtGenerate = function (e)
 
     const style = getComputedStyle(elem);
     const tag = JSON.parse(elem.dataset['tag']);
+
+    // if (tag.type == 'Biblioteki')
+    //   continue; /* DO NOT COPY OVER */
 
     if (tag.type != 'Arrow')
     {
@@ -1301,6 +1428,8 @@ const evtGenerate = function (e)
       arrows.push(tag);
     }
 
+    tag.seen = false;
+
     all.push(tag);
 
     if (tag.type == 'Początek')
@@ -1310,8 +1439,6 @@ const evtGenerate = function (e)
   /**
    * Important utils
    */
-
-
   const joinedBlock = function (cx, cy)
   {
     for (let block of all)
@@ -1344,8 +1471,6 @@ const evtGenerate = function (e)
       const y = arr.ay - 30;
       const dx = arr.ax + 30;
       const dy = arr.ay + 30;
-
-      // console.log('TESTING', cx, cy, 'with', x, y, dx, dy);
 
       if (cx > x && cx < dx && cy > y && cy < dy)
         return arr;
@@ -1407,8 +1532,9 @@ const evtGenerate = function (e)
 
     while (true)
     {
+      currentArrow.seen = true;
+
       const jb = joinedBlock(currentArrow.ex, currentArrow.ey);
-      console.log('JOINED BLOCK', jb);
 
       if (jb != null)
       {
@@ -1417,10 +1543,8 @@ const evtGenerate = function (e)
       else
       { /* look for joined arrows */
         currentArrow = joinedArrow(currentArrow.ex, currentArrow.ey);
-        console.log('Joining another arrow', currentArrow);
         if (currentArrow == null)
         {
-          console.log('NO MORE ARROWS ON PATH, UNCONNCEDTED ERROR')
           return null;
         }
       }
@@ -1432,7 +1556,8 @@ const evtGenerate = function (e)
    */
 
   let __codes = "";
-  let __predefs = `#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n\n`;
+  let __predefs = ``;
+  const jumps = []; /* label sanitizer */
 
   for (let entry of entries)
   {
@@ -1446,6 +1571,7 @@ const evtGenerate = function (e)
     while (blocks.length > 0)
     {
       const block = blocks[0];
+      block.seen = true;
       let loopBack = null;
 
       if (block.type != 'Początek')
@@ -1469,16 +1595,29 @@ const evtGenerate = function (e)
 
           if (dest == null)
           {
-            console.log('[] Pain and suffering failed us misserably\n');
+            console.log(o);
+            markError(o);
+            alert("Ścieżka po warunku jest przerwana lub niepołączona!");
             return;
           }
 
-          const quanta = nearestText(o.ax, o.ay).content;
+          const nearest = nearestText(o.ax, o.ay);
+          if (nearest == null)
+          {
+            markError(o);
+            alert("Ścieżka bez ustalenia warunku");
+            return; 
+          }
 
+          const quanta = nearest.content;
           __code += `\tif (${block.content} ${quanta})\n\t\tgoto ${dest.label};\n\n`;
+          jumps.push(dest.label);
 
           if (seen.includes(dest.label) == false)
+          {
+            dest.seen = true;
             blocks.push(dest);
+          }
         }
 
       }
@@ -1487,17 +1626,26 @@ const evtGenerate = function (e)
         /* find nearest outing node */
         const outting = allOutingArrows(block);
 
-        if (outting.length == 0 || outting.length > 1)
+        if (outting.length == 0)
         {
-          console.log("ERROR, NONE OR more then one arrow outing");
-          console.log(block, 'outting', outting);
+          markError(block);
+          alert("Blok na skraju diagramu bez dalszych połączeń!");
+          return;
+        }
+          
+        if (outting.length > 1)
+        {
+          markError(block);
+          alert("Więcej niż jedno połączenie wychodzi z bloku");
+          return;
         }
 
         const nextBlock = traversePath(outting[0]);
       
         if (nextBlock == null)
         {
-          console.log('No consecutive block joined');
+          markError(outting[0]);
+          alert("Ścieżka nie jest przyłączona do żadnego bloku");
           return;
         }
 
@@ -1518,7 +1666,10 @@ const evtGenerate = function (e)
           __code += `\t${block.content}\n\n`;
 
         if (loopBack != null)
+        {
           __code += `\tgoto ${loopBack};\n\n`;
+          jumps.push(loopBack);
+        }
       }
 
       /* we've seen that one */
@@ -1535,7 +1686,48 @@ const evtGenerate = function (e)
 
   }
 
-  const final = __predefs + '\n' + __codes;
+  /* check if all blocks were seen */
+
+  for (let tag of all)
+  {
+    if (tag.type == 'Tekst')
+      continue;
+
+    if (tag.seen == false)
+    {
+      markError(tag);
+      alert("Element znajduje się poza diagramem");
+      return; 
+    }
+  }
+
+  /* sanitize labels */
+
+  for (let tag of all)
+  {
+    if (jumps.includes(tag.label) == false)
+    {
+      __codes = __codes.replaceAll(tag.label + ": ;\n", "");
+    }
+  }
+
+  /* in case only error checking */
+  if (doNotSave)
+  {
+    alert("Diagram jest prawidłowy");
+    return;
+  }
+
+  /* link libs */
+  let __libs = "";
+  const libs = libLinker(__codes);
+
+  const __auth = `/**\n *  Kod wygenerowano przy użyciu narzędzia DiGram\n *  (c) 2023 Marcin Ślusarczyk, Maciej Bandura\n */\n`;
+
+  for (let lib of libs)
+    __libs += `#include <${lib}>\n`;
+
+  const final = __auth + '\n' + __libs + '\n' + __predefs + '\n' + __codes;
 
   /* spew out code */
   const blob = new Blob([final], { type: 'text/plain' });

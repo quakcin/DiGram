@@ -64,7 +64,8 @@ exports.applyMainMenu = (win) =>
       label: 'Kod',
       submenu: 
       [
-        { label: 'Weryfikuj', wired: '' },
+        { label: 'Resetuj Błędy', wired: 'evtUnmarkErrors' },
+        { label: 'Weryfikuj', wired: 'evtVeryfi' },
         { label: 'Generuj', wired: 'evtGenerate' },
       ]
     },

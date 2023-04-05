@@ -377,16 +377,6 @@ html, body
   background-position: center center; 
 }
 
-.ArrowElement
-{
-  background-color: black;
-  /* background-image: url('../icons/arrow-top.png'); */
-  background-size:100% 100%;
-  padding: 1px;
-  box-sizing: border-box;
-  position: fixed;
-}
-
 .IOElement > div
 {
   color: white;
@@ -395,6 +385,16 @@ html, body
   user-select: none;
   padding: 20px;
   box-sizing: border-box;
+}
+
+.ArrowElement
+{
+  background-color: black;
+  /* background-image: url('../icons/arrow-top.png'); */
+  background-size:100% 100%;
+  padding: 1px;
+  box-sizing: border-box;
+  position: fixed;
 }
 
 .TekstElement
@@ -422,4 +422,27 @@ html, body
   background-color: #207cf5;
   border: 2px solid #0752b5;
   opacity: 0.5;
+}
+
+.BibliotekiElement
+{
+  background-color: transparent;
+  background-image: url('../icons/libs.png');
+  /* padding: 20px 0px; */
+  /* box-sizing: border-box; */
+  position: fixed;
+  background-size: stretch;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center center; 
+}
+
+.BibliotekiElement > div
+{
+  color: black;
+  text-align: center;
+  outline: none;
+  user-select: none;
+  padding: 20px;
+  box-sizing: border-box;
 }
