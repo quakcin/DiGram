@@ -13,6 +13,26 @@ const { app, BrowserWindow, screen, Menu } = require('electron')
 exports.applyMainMenu = (win) => 
 {
   /**
+   * Event otwarcia instrukcji
+   */
+
+  const openTutorial = function (e)
+  {
+    const win = new BrowserWindow
+    ({
+      width: 1280,
+      height: 720,
+      frame: true,
+      autoHideMenuBar: true,
+    });
+
+    win.loadFile('./tutorial.pdf');
+    win.show();
+    win.center();
+    win.setAlwaysOnTop(true, 'screen');
+  }
+
+  /**
    * MenuBar ekranu aplikacji
    */
   const mainMenu = 
@@ -73,7 +93,7 @@ exports.applyMainMenu = (win) =>
       label: 'Pomoc',
       submenu: 
       [
-        { label: 'Instrukcja' },
+        { label: 'Instrukcja', click: openTutorial},
         { role: 'about', label: 'O Programie' }
       ]
     }

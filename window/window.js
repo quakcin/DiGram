@@ -140,7 +140,6 @@ const __block_edit_event = function (e)
   elem.contentEditable = true;
   elem.focus();
   selectTextElement(elem)
-  editor.isUserTyping = true;
 }
 
 const spawnAnArrow = function (x, y, w, h, dir)
@@ -304,7 +303,6 @@ const editor =
     italic: false,
     underline: false
   },
-  isUserTyping: false
 };
 
 const moveObject = function (id, e = null)
@@ -474,7 +472,6 @@ document.body.onload = function ()
 
 document.body.onmousedown = function (e)
 {
-  editor.isUserTyping = false;
 
   if (editor.pathing && isFarViewport(e.target))
   {
@@ -809,8 +806,15 @@ document.body.onkeydown = function (e)
   /**
    * Supress if user is typing
    */
-  if (editor.isUserTyping)
-    return;
+  // if (editor.isUserTyping)
+  //   return;
+
+  const elems = document.getElementsByClassName("DiagramElement");
+  for (let ele of elems)
+    if (ele.children.length == 1)
+      if (ele.children[0].isContentEditable)
+        return; // supress
+
 
   /**
    * Handle keyboardEventTable
@@ -1198,17 +1202,25 @@ const evtExport = function (type = 'image/png')
     ctx.fillStyle = tag.type != 'Tekst' ? 'white' : 'black';
     ctx.textBaseline="middle"
 
-    const str = elem.textContent.trim();
+    const str = elem.innerText; //elem.textContent.trim();
+    const lines = elem.innerText.split('\n');
 
-    if (tag.type == 'Przetwarzanie')
+    const offs = tag.size;
+    const bloc_hei = lines.length * offs;
+    const yoff = tag.y + ehei / 2 - (bloc_hei / 2) + offs / 2;
+
+    for (const [i, line] of lines.entries())
     {
-      ctx.textAlign = 'start';
-      ctx.fillText(str, tag.x + 5, tag.y + ehei / 2);
-    }
-    else
-    {
-      ctx.textAlign = 'center';
-      ctx.fillText(str, tag.x + ewid / 2, tag.y + ehei / 2);
+      if (tag.type == 'Przetwarzanie')
+      {
+        ctx.textAlign = 'start';
+        ctx.fillText(line, tag.x + 5, i * offs + yoff);
+      }
+      else
+      {
+        ctx.textAlign = 'center';
+        ctx.fillText(line, tag.x + ewid / 2, i * offs + yoff);
+      }
     }
   }
 
@@ -1402,7 +1414,7 @@ const __generator = function ( doNotSave = false )
       tag.width = wid;
       tag.height = hei;
       tag.label = `_label_${labelidx++}`;
-      tag.content = elem.textContent.trim();
+      // tag.content = elem.innerText + "\n" + "__DANGLING STR"; // elem.textContent.trim();
     } 
     else
     {
