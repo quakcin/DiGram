@@ -5,6 +5,7 @@
  *     Moduł menubar'a okna aplikacji
  */
 
+const { default: openAboutWindow } = require('about-window');
 const { app, BrowserWindow, screen, Menu } = require('electron')
 
 /**
@@ -30,6 +31,7 @@ exports.applyMainMenu = (win) =>
     win.show();
     win.center();
     win.setAlwaysOnTop(true, 'screen');
+    win.setIcon("./icons/main.png");
   }
 
   /**
@@ -94,7 +96,20 @@ exports.applyMainMenu = (win) =>
       submenu: 
       [
         { label: 'Instrukcja', click: openTutorial},
-        { role: 'about', label: 'O Programie' }
+        { label: 'O Programie', 
+          click: (e) => 
+          {
+            openAboutWindow
+            ({
+              icon_path: "../../icons/main.png", 
+              product_name: "DiGram",
+              copyright: "(c) 2023/2024 Marcin Ślusarczyk, Maciej Bandura",
+              license: "MIT",
+              description: "Profesjonalny program studyjny, służący do projektowania złożonych schematów blokowych algorytmów, obejmujący funkcję konwertowania diagramów na kod w języku ANSI C.",
+              show_close_button: true
+            })
+          } 
+        }
       ]
     }
   ];
